@@ -1,0 +1,78 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+housing = pd.read_csv('/content/sample_data/california_housing_train.csv')
+housing.shape
+
+housing.head()
+
+housing.describe()
+housing.info()
+
+from sklearn.model_selection import train_test_split
+
+train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+
+print(f"Rows in train set: {len(train_set)}")
+print(f"Rows in test set: {len(test_set)}")
+
+train_set.info()
+
+housing.describe()
+
+housing.hist(bins=50,figsize=(20,15))
+
+housing.plot(kind="scatter", x="longitude", y="latitude",
+             alpha=0.1, s=housing["population"]/100, label="population",
+            c="median_house_value", cmap=plt.get_cmap("jet"))
+
+housing.corr()
+
+corr_matrix=housing.corr()
+corr_matrix["median_house_value"].sort_values(ascending=False)
+
+housing_na=housing.dropna(subset=["total_bedrooms"])
+#here I am dropping th eobservations with missing values for total_bedrooms
+housing_na.shape
+
+X=housing_na.drop(['median_house_value'], axis='columns')
+y=housing_na['median_house_value']
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X,y,
+                                                    test_size = 0.2,
+                                                    random_state=1984)
+
+from sklearn.linear_model import LinearRegression
+OLS = LinearRegression()
+OLS.fit(X_train, y_train)
+#display the intercept and coefficient
+print(" the intercept is " +  str(OLS.intercept_))
+print(" the coeffiients are " +  str(OLS.coef_))
+print(" the R_sqaured value is " +  str(OLS.score(X_train, y_train)))
+
+#predicting with OLS
+y_pred=OLS.predict(X_test)
+performance = pd.DataFrame({'PREDICTIONS': y_pred, 'ACTUAL VALUES':y_test})
+performance.head()
+performance['error']=performance['ACTUAL VALUES']-performance['PREDICTIONS']
+performance.head()
+
+#preparing data for plotting
+performance.reset_index(drop=True, inplace=True) #inplace turns into a column
+performance.reset_index(inplace=True)
+performance.head()
+
+#plot the residuals
+fig = plt.figure(figsize=(10,5))
+plt.bar('index', 'error', data=performance[:50], color='black', width=0.3)
+plt.ylabel('residuals')
+plt.xlabel('observations')
+plt.show()
+
+import statsmodels.api as sm
+X_train = sm.add_constant(X_train)
+X_train.head()
+
+nicer_OLS=sm.OLS(y_train,X_train).fit()
+nicer_OLS.summary()
